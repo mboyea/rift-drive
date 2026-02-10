@@ -35,6 +35,8 @@
             minio
           ];
           shellHook = ''
+            # load .env
+            source ./scripts/load-env.sh
             # suppress warning about dirty git for nix commands
             export NIX_CONFIG="warn-dirty = false"
           '';
