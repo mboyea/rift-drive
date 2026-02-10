@@ -54,5 +54,5 @@ Commands can be run from within any of the project directories.
 | `help` | Print usage information for the Rift Drive CLI |
 
 Scripts are declared in [flake.nix](./flake.nix) and defined in [scripts/](./scripts).
-The shorthand `run <script> [args...]` can be used if you are in a subshell created by direnv or `nix develop`.
+You can use the shorthand `run <script> [args...]` if you are in a subshell created by direnv or `nix develop`.
 
