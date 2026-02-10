@@ -8,7 +8,7 @@ echo
 echo "Usage:"
 echo "  nix run"
 echo "  └ Alias for \"nix run .#help\""
-echo "  nix run .#script [args...]"
+echo "  nix run .#<script> [args...]"
 echo "  └ Run a script"
 echo "  nix develop"
 echo "  └ Start a subshell with the project dependencies installed"

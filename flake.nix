@@ -22,9 +22,15 @@
         help = utils.lib.mkApp { drv = packages.help; };
         default = apps.help;
       };
-      devShells = {
+      devShells = let
+        run-alias = pkgs.writeShellScriptBin "run" ''
+          script_name = "$1" && shift
+          exec nix run .#"$script_name" -- "$@"
+	'';
+      in {
         default = pkgs.mkShell {
           packages = with pkgs; [
+            run-alias
             awscli2
             minio
           ];
