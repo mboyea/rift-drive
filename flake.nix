@@ -24,9 +24,9 @@
       };
       devShells = let
         run-alias = pkgs.writeShellScriptBin "run" ''
-          script_name = "$1" && shift
+          script_name="$1" && shift
           exec nix run .#"$script_name" -- "$@"
-	'';
+        '';
       in {
         default = pkgs.mkShell {
           packages = with pkgs; [
@@ -34,6 +34,10 @@
             awscli2
             minio
           ];
+          shellHook = ''
+            # suppress warning about dirty git for nix commands
+            export NIX_CONFIG="warn-dirty = false"
+          '';
         };
       };
     }
