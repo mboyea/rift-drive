@@ -55,6 +55,11 @@ load_env_file() {
     
     if [ -z "${!key}" ]; then
       export "$key"="$value"
+    else
+      # warn the user if a value is skipped and unique
+      if [[ $- == *i* ]] && [ "${!key}" != "$value" ]; then
+        echo -e "\033[1;93m[!] Ignoring $key: Value already set to '${!key}'\033[0m"
+      fi
     fi
   done < "$target_file"
 }
