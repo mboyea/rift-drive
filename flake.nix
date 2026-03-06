@@ -45,7 +45,7 @@
           ];
           shellHook = ''
             # load .env
-            source ./scripts/load-env.sh
+            ENV_FILE=".env" source ./scripts/load-env.sh
             # suppress warning about dirty git for nix commands
             export NIX_CONFIG="warn-dirty = false"
             echo -e "\033[1;32mSUCCESSFULLY LOADED DEVSHELL FOR ${name}-${version}\033[0m"
