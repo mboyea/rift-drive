@@ -8,14 +8,13 @@
     pname = "rift-drive";
     version = "0.0.0";
     utils = flake-utils;
-  in utils.lib.eachDefaultSystem (
+  in {
+    lib = import ./lib;
+    modules = import ./modules;
+  } // utils.lib.eachDefaultSystem (
     system: let
-      pkgs = (import nixpkgs { inherit system; }).extend (final: prev: {
-        lib = prev.lib // import ./lib {
-          pkgs = final;
-          lib = prev.lib;
-	};
-      });
+      pkgs = self.lib.extend (import nixpkgs { inherit system; });
+      modules = self.modules { inherit pkgs; };
     in rec {
       legacyPackages = pkgs;
       packages = {
@@ -23,6 +22,9 @@
            name = "${pname}-help-${version}";
            target = ./scripts/help.sh;
         };
+        # start-dev = pkgs.lib.run {};
+        # start-stage = pkgs.lib.run {};
+        # start-prod = pkgs.lib.run {};
       };
       apps = {
         help = utils.lib.mkApp { drv = packages.help; };
@@ -51,12 +53,11 @@
             ENV_FILE=".env" source ./scripts/load-env.sh
             # suppress warning about dirty git for nix commands
             export NIX_CONFIG="warn-dirty = false"
+            # print success message
             echo -e "\033[1;32mSUCCESSFULLY LOADED DEVSHELL FOR ${pname}-${version}\033[0m"
           '';
         };
       };
     }
-  ) // {
-    lib = import ./lib;
-  };
+  );
 }

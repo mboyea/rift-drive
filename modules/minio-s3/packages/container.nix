@@ -1,7 +1,7 @@
 {
   pkgs,
   image,
-}: mkContainer {
+}: pkgs.lib.mkContainer {
   imageName = image.name;
   imageTag = image.tag;
   imageStream = image.stream;
