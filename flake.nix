@@ -8,13 +8,15 @@
     pname = "rift-drive";
     version = "0.0.0";
     utils = flake-utils;
+    _lib = import ./lib;
+    _modules = import ./modules;
   in {
-    lib = import ./lib;
-    modules = import ./modules;
+    lib = _lib;
+    modules = _modules;
   } // utils.lib.eachDefaultSystem (
     system: let
-      pkgs = self.lib.extend (import nixpkgs { inherit system; });
-      modules = self.modules { inherit pkgs; };
+      pkgs = _lib.extend (import nixpkgs { inherit system; });
+      modules = _modules { inherit pkgs; };
     in rec {
       legacyPackages = pkgs;
       packages = {
