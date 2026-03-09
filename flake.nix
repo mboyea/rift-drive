@@ -43,6 +43,7 @@
         bin-scripts = pkgs.symlinkJoin { name = "${pname}-${version}-scripts"; paths = builtins.attrValues packages; };
       in {
         default = pkgs.mkShell {
+          inputsFrom = pkgs.lib.mapAttrsToList (n: v: v.devShells.default) modules;
           packages = [
             run-alias                 # run <script>
             bin-scripts               # enable run-alias to derive scripts without re-evaluation (fast!)
