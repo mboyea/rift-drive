@@ -41,18 +41,17 @@ Be sure to [read the license](./LICENSE.md).
 
 #### Scripts
 
-Commands can be run from within any of the project directories.
+If you have not enabled direnv, run `nix develop` to start the development shell.
+Scripts can be run from within any of the project directories.
 
 | Command | Description |
 |:--- |:--- |
-| `nix run` | Alias for `nix run .#help` |
-| `nix run .#<script> [args...]` | Run a script |
-| `nix develop` | Start a subshell with the project dependencies installed |
+| `nix develop` | Start a subshell with the project dependencies installed; Not needed with direnv enabled |
+| `run [script]` | Run a script; This is an alias for 'nix run .#[script] [args...]' but with a cache of the derivation output |
 
 | Script | Description |
 |:--- |:--- |
 | `help` | Print usage information for the Rift Drive CLI |
 
 Scripts are declared in [flake.nix](./flake.nix) and defined in [scripts/](./scripts).
-The shorthand `run <script> [args...]` can be used if you are in a subshell created by direnv or `nix develop`.
 
