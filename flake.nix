@@ -24,10 +24,10 @@
         #   name = "${pname}-deploy-${version}";
         #   target = ./scripts/deploy.sh;
         # };
-        # dev = pkgs.lib.run {################      run dev [--debug|--slim] YELLOWWARN[!] Running in slim mode (distroless). No shell access available.NC
-        #   name = "${pname}-dev-${version}";
-        #   target = ./scripts/dev.sh;
-        # };
+        dev = pkgs.lib.run {
+          name = "${pname}-dev-${version}";
+          target = ./scripts/dev.sh;
+        };
         help = pkgs.lib.run {
            name = "${pname}-help-${version}";
            target = ./scripts/help.sh;
