@@ -20,13 +20,18 @@
     in rec {
       legacyPackages = pkgs;
       packages = {
+        # deploy = pkgs.lib.run {################   run deploy [--stage|--prod]
+        #   name = "${pname}-deploy-${version}";
+        #   target = ./scripts/deploy.sh;
+        # };
+        # dev = pkgs.lib.run {################      run dev [--debug|--slim] YELLOWWARN[!] Running in slim mode (distroless). No shell access available.NC
+        #   name = "${pname}-dev-${version}";
+        #   target = ./scripts/dev.sh;
+        # };
         help = pkgs.lib.run {
            name = "${pname}-help-${version}";
            target = ./scripts/help.sh;
         };
-        # start-dev = pkgs.lib.run {};
-        # start-stage = pkgs.lib.run {};
-        # start-prod = pkgs.lib.run {};
       };
       apps = {
         help = utils.lib.mkApp { drv = packages.help; };
@@ -47,9 +52,8 @@
         default = pkgs.mkShell {
           inputsFrom = pkgs.lib.mapAttrsToList (n: v: v.devShells.default) modules;
           packages = [
-            run-alias                 # run <script>
-            bin-scripts               # enable run-alias to derive scripts without re-evaluation (fast!)
-            pkgs.nix-prefetch-docker  # dockerTools.pullImage < nix-prefetch-docker --quiet --image-name _ --image-tag _ --image-digest _
+            run-alias   # run <script>
+            bin-scripts # enable run-alias to derive scripts without re-evaluation (fast!)
           ];
           shellHook = ''
             # load .env

@@ -92,7 +92,7 @@ in pkgs.writeShellApplication {
     fi
 
     # run post stop functions when this script exits
-    container_id_file="$(mktemp)"
+    container_id_file="$(mktemp -u)"
     on_exit() {
       trap ''' INT
       if "${pkgs.lib.trivial.boolToString ensureStopOnExit}"; then

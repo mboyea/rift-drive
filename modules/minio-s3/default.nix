@@ -1,5 +1,6 @@
 {
   pkgs ? import <nixpkgs> {},
+  mkContainer ? pkgs.lib.mkContainer,
 }: let
   name = "minio-s3";
   version = "0.0.0";
@@ -8,8 +9,12 @@ in rec {
     appImage = pkgs.callPackage ./packages/app-image.nix {
       inherit name version;
     };
-    container = pkgs.callPackage ./packages/container.nix {
-      image = packages.appImage;
+    containerDebug = pkgs.callPackage ./packages/container.nix {
+      inherit mkContainer;
+      image = packages.appImage.override { includeDevTools = true; };
+    };
+    containerSlim = packages.containerDebug.override {
+      image = packages.appImage.override { includeDevTools = false; };
     };
   };
   devShells.default = import ./shell.nix { inherit pkgs; };
