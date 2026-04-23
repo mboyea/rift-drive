@@ -18,11 +18,11 @@ let
       camelName = toCamelCase baseName;
       importedFile = import (./. + "/${fileName}");
       args = if builtins.isFunction importedFile then builtins.functionArgs importedFile else {};
-      value = if args ? pkgs
-        then (overrides: importedFile (({
-          inherit pkgs;
-          stdenv = pkgs.stdenv;
-        } // (builtins.intersectAttrs args pkgs)) // overrides))
+      value = if builtins.isFunction importedFile
+        then (overrides: let
+          provider = { inherit pkgs lib; stdenv = pkgs.stdenv; } // pkgs;
+          requested = builtins.intersectAttrs args provider;
+        in importedFile (requested // overrides))
         else importedFile;
     in lib.nameValuePair camelName value)
     (lib.filterAttrs (name: type: 
