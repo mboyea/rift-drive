@@ -21,7 +21,7 @@ let
     if [[ -L "$LOCAL_CACHE_PATH" ]] && (( "$LOCAL_CACHE_TIME" >= "$SCRIPT_TIME" )); then
       exec "$(readlink -f "$LOCAL_CACHE_PATH")" "''${@:2}"
     fi
-    SHELL_CACHE_TIME=$(nix path-info --json "$SHELL_CACHE_PATH" | jq '.[].registrationTime')
+    SHELL_CACHE_TIME=$(nix path-info --json "$SHELL_CACHE_PATH" 2>/dev/null | jq '.[].registrationTime // 0')
     if [[ -n "$SHELL_CACHE_PATH" ]] && (( "$SHELL_CACHE_TIME" >= "$SCRIPT_TIME" )); then
       mkdir -p "$LOCAL_CACHE_DIR"
       ln -sf "$SHELL_CACHE_PATH" "$LOCAL_CACHE_PATH"
