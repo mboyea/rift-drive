@@ -38,13 +38,26 @@
         default = apps.help;
       };
       devShells = let
-        run-alias = pkgs.writeShellScriptBin "run" ''
+        run-scripts-alias = pkgs.writeShellScriptBin "run" ''
           TARGET_SCRIPT=''${1:-help}
-          BIN_NAME="${pname}-$TARGET_SCRIPT-${version}"
-          if command -v "$BIN_NAME" >/dev/null 2>&1; then
-            exec "$BIN_NAME" "''${@:2}"
+          ROOT_DIR=$(${pkgs.git}/bin/git rev-parse --show-toplevel 2>/dev/null)
+          ROOT_DIR=''${ROOT_DIR:-$(pwd)}
+          SCRIPT_PATH="$ROOT_DIR/scripts/$TARGET_SCRIPT.sh"
+          MARKER_DIR="$ROOT_DIR/.direnv/run-scripts-cache"
+          MARKER_PATH="$MARKER_DIR/$TARGET_SCRIPT.ok"
+          CACHE_BIN=$(command -v "${pname}-$TARGET_SCRIPT-${version}" 2>/dev/null)
+          if [[ -z "$CACHE_BIN" || ! -f "$SCRIPT_PATH" || ! -f "$MARKER_PATH" || "$SCRIPT_PATH" -nt "$MARKER_PATH" ]]; then
+            echo "cache miss"
+            mkdir -p "$MARKER_DIR"
+            
+            if nix run .#"$TARGET_SCRIPT" -- "''${@:2}"; then
+              touch "$MARKER_PATH"
+            else
+              exit $?
+            fi
           else
-            exec nix run .#"$TARGET_SCRIPT" -- "''${@:2}"
+            echo "cache hit"
+            exec "$CACHE_BIN" "''${@:2}"
           fi
         '';
         bin-scripts = pkgs.symlinkJoin { name = "${pname}-${version}-scripts"; paths = builtins.attrValues packages; };
@@ -52,7 +65,7 @@
         default = pkgs.mkShell {
           inputsFrom = pkgs.lib.mapAttrsToList (n: v: v.devShells.default) modules;
           packages = [
-            run-alias   # run <script>
+            run-scripts-alias   # run <script> (cache-enabled)
             bin-scripts # enable run-alias to derive scripts without re-evaluation (fast!)
           ];
           shellHook = ''
