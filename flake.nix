@@ -20,7 +20,7 @@
     in rec {
       legacyPackages = pkgs;
       packages = {
-        # deploy = pkgs.lib.run {################   run deploy [--stage|--prod]
+        # deploy = pkgs.lib.run {
         #   name = "${pname}-deploy-${version}";
         #   target = ./scripts/deploy.sh;
         # };
@@ -38,35 +38,44 @@
         default = apps.help;
       };
       devShells = let
-        run-scripts-alias = pkgs.writeShellScriptBin "run" ''
+        scripts-run-alias = pkgs.writeShellScriptBin "run" ''
           TARGET_SCRIPT=''${1:-help}
           ROOT_DIR=$(${pkgs.git}/bin/git rev-parse --show-toplevel 2>/dev/null)
           ROOT_DIR=''${ROOT_DIR:-$(pwd)}
           SCRIPT_PATH="$ROOT_DIR/scripts/$TARGET_SCRIPT.sh"
-          MARKER_DIR="$ROOT_DIR/.direnv/run-scripts-cache"
-          MARKER_PATH="$MARKER_DIR/$TARGET_SCRIPT.ok"
-          CACHE_BIN=$(command -v "${pname}-$TARGET_SCRIPT-${version}" 2>/dev/null)
-          if [[ -z "$CACHE_BIN" || ! -f "$SCRIPT_PATH" || ! -f "$MARKER_PATH" || "$SCRIPT_PATH" -nt "$MARKER_PATH" ]]; then
-            echo "cache miss"
-            mkdir -p "$MARKER_DIR"
-            
-            if nix run .#"$TARGET_SCRIPT" -- "''${@:2}"; then
-              touch "$MARKER_PATH"
+          LOCAL_CACHE_DIR="$ROOT_DIR/.direnv/scripts-run-cache"
+          LOCAL_CACHE_PATH="$LOCAL_CACHE_DIR/$TARGET_SCRIPT"
+          SHELL_CACHE_PATH=$(command -v "${pname}-$TARGET_SCRIPT-${version}" 2>/dev/null)
+          if [[ -f "$SCRIPT_PATH" ]]; then
+            SCRIPT_TIME=$(stat -c %Y "$SCRIPT_PATH")
+            LOCAL_CACHE_TIME=$(stat -c %Y "$LOCAL_CACHE_PATH" 2>/dev/null || echo 0)
+            if [[ -L "$LOCAL_CACHE_PATH" ]] && (( "$LOCAL_CACHE_TIME" >= "$SCRIPT_TIME" )); then
+              exec "$(readlink -f "$LOCAL_CACHE_PATH")" "''${@:2}"
             else
-              exit $?
+              SHELL_CACHE_TIME=$(nix path-info --json "$SHELL_CACHE_PATH" | jq '.[].registrationTime')
+              if [[ -n "$SHELL_CACHE_PATH" ]] && (( "$SHELL_CACHE_TIME" >= "$SCRIPT_TIME" )); then
+                mkdir -p "$LOCAL_CACHE_DIR"
+		ln -sf "$SHELL_CACHE_PATH" "$LOCAL_CACHE_PATH"
+                exec "$SHELL_CACHE_PATH" "''${@:2}"
+              fi
             fi
+          fi
+          if BUILD_PATH=$(nix build .#"$TARGET_SCRIPT" --no-link --print-out-paths); then
+            BIN_PATH=$(find "$BUILD_PATH/bin" -type f -executable | head -n 1)
+            mkdir -p "$LOCAL_CACHE_DIR"
+            ln -sf "$BIN_PATH" "$LOCAL_CACHE_PATH"
+            exec "$BIN_PATH" "''${@:2}"
           else
-            echo "cache hit"
-            exec "$CACHE_BIN" "''${@:2}"
+            exit $?
           fi
         '';
-        bin-scripts = pkgs.symlinkJoin { name = "${pname}-${version}-scripts"; paths = builtins.attrValues packages; };
+        packages-cache = pkgs.symlinkJoin { name = "${pname}-${version}-scripts"; paths = builtins.attrValues packages; };
       in {
         default = pkgs.mkShell {
           inputsFrom = pkgs.lib.mapAttrsToList (n: v: v.devShells.default) modules;
           packages = [
-            run-scripts-alias   # run <script> (cache-enabled)
-            bin-scripts # enable run-alias to derive scripts without re-evaluation (fast!)
+            scripts-run-alias # run <script> (cache-enabled)
+            packages-cache    # bring scripts into the shell for scripts-run-alias enable run-alias to derive scripts without re-evaluation (fast!)
           ];
           shellHook = ''
             # load .env
